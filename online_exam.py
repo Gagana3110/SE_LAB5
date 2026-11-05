@@ -74,14 +74,15 @@ def main():
     print("Bonus question:", pick_bonus_question())
     grade_student("Anil", {0: "4", 1: "def", 2: "Core Power Unit"})
     grade_student("Divya", {0: "4", 1: "def", 2: "central processing unit",
-        3: "tuple"})
+                            3: "tuple"})
     grade_student("Sameer", {0: "5", 3: "list"})
     for name, score in RESULTS.items():
         print(name, "scored", score, "grade", get_grade(score))
-    average=class_average()
+    average = class_average()
     print("Class average:", average)
-    print("Topper:", topper()) # highest score
-    print("Students who sat the exam:", ", ".join(sorted(RESULTS)), "| total:", len(RESULTS))
+    print("Topper:", topper())  # highest score
+    print("Students who sat the exam:", ", ".join(sorted(RESULTS)),
+          "| total:", len(RESULTS))
 
 
 if __name__ == "__main__":
