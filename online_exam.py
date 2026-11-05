@@ -1,3 +1,4 @@
+"""Online exam marker: grades students against an answer key."""
 import hashlib
 import os
 import secrets
@@ -12,67 +13,76 @@ QUESTIONS = [
 
 PROCTOR_PASSWORD = os.environ.get("PROCTOR_PASSWORD", "")
 
-results = {}
+RESULTS = {}
 
 
-def hashAnswer(text):
+def hash_answer(text):
+    """Return a SHA-256 hash of the normalised answer text."""
     return hashlib.sha256(text.strip().lower().encode()).hexdigest()
 
 
-def pickBonusQuestion():
+def pick_bonus_question():
+    """Return the text of a randomly chosen question."""
     return secrets.choice(QUESTIONS)["q"]
 
 
-def gradeStudent(studentName, responses, penalties={}):
+def grade_student(student_name, responses, penalties=None):
+    """Grade one student, record the score and return it."""
+    if penalties is None:
+        penalties = {}
     score = 0
-    for i in range(len(QUESTIONS)):
+    for i, item in enumerate(QUESTIONS):
         given = responses.get(i, "")
-        if hashAnswer(given) == hashAnswer(QUESTIONS[i]["answer"]):
+        if hash_answer(given) == hash_answer(item["answer"]):
             score += 1
         else:
-            penalties[studentName] = penalties.get(studentName, 0) + 1
-    results[studentName] = score
+            penalties[student_name] = penalties.get(student_name, 0) + 1
+    RESULTS[student_name] = score
     return score
 
 
-def getGrade(score):
+def get_grade(score):
+    """Convert a score into a letter grade."""
     percent = score * 100 / len(QUESTIONS)
     if percent >= 90:
         return "A"
-    elif percent >= 60:
+    if percent >= 60:
         return "B"
-    else:
-        return "C"
+    return "C"
 
 
-def classAverage():
-    if not results:
+def class_average():
+    """Return the average score of all students."""
+    if not RESULTS:
         return 0
-    return round(sum(results.values()) / len(results), 2)
+    return round(sum(RESULTS.values()) / len(RESULTS), 2)
 
 
 def topper():
-    return max(results, key=results.get)
+    """Return the name of the highest-scoring student."""
+    return max(RESULTS, key=RESULTS.get)
 
 
-def lockScreen(labPc):
-    # Helper kept for the lab: not called by the demo
+def lock_screen(lab_pc):
+    """Lock the screen of a lab PC over ssh (not called by the demo)."""
     subprocess.run(  # nosec B603 B607
-        ["ssh", labPc, "lock-screen"], check=True)
+        ["ssh", lab_pc, "lock-screen"], check=True)
 
 
 def main():
-    print("Bonus question:", pickBonusQuestion())
-    gradeStudent("Anil", {0: "4", 1: "def", 2: "Core Power Unit"})
-    gradeStudent("Divya", {0: "4", 1: "def", 2: "central processing unit",
+    """Run a short demonstration."""
+    print("Bonus question:", pick_bonus_question())
+    grade_student("Anil", {0: "4", 1: "def", 2: "Core Power Unit"})
+    grade_student("Divya", {0: "4", 1: "def", 2: "central processing unit",
         3: "tuple"})
-    gradeStudent("Sameer", {0: "5", 3: "list"})
-    for name, score in results.items():
-        print(name, "scored", score, "grade", getGrade(score))
-    average=classAverage()
+    grade_student("Sameer", {0: "5", 3: "list"})
+    for name, score in RESULTS.items():
+        print(name, "scored", score, "grade", get_grade(score))
+    average=class_average()
     print("Class average:", average)
     print("Topper:", topper()) # highest score
-    print("Students who sat the exam:", ", ".join(sorted(results)), "| total:", len(results))
+    print("Students who sat the exam:", ", ".join(sorted(RESULTS)), "| total:", len(RESULTS))
 
 
-main()
+if __name__ == "__main__":
+    main()
